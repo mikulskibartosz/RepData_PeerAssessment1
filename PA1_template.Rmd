@@ -10,6 +10,13 @@ output:
 options(scipen=1, digits=2)
 ```
 
+## Set locale to English
+Because English is not the default language of my operating system and one of the functions used in the assignment uses the locale to return the names of days of the week (the weekdays function) it is necessary to change the locale to English.
+```{r}
+Sys.setlocale("LC_ALL", 'en_GB.UTF-8')
+Sys.setenv(LANG = "en_US.UTF-8")
+```
+
 ## Loading and preprocessing the data
 ```{r}
 zipFileName <- "activity.zip"
@@ -32,12 +39,9 @@ Mean (without NA values): `r mean(stepsPerDay$stepsPerDay, na.rm=TRUE)`
 Median (without NA values): `r median(stepsPerDay$stepsPerDay, na.rm=TRUE)`
 
 
-## What is the average daily activity pattern?
-
-avgDailyPattern <- aggregate(data$steps, by=list(data$interval), FUN=mean, na.action=na.omit)
-colnames(avgDailyPattern) <- c("interval", "averageActivity")
-
 ## Imputing missing values
+
+Note that I changed the order of tasks, this is a part of the third task.
 
 I could either remove all NA values or replace them with zeros, because if a person was not using the tracker he or she tracked zero steps.
 The following code replaces all NA values with zeros.
@@ -45,5 +49,47 @@ The following code replaces all NA values with zeros.
 dataWithoutNa <- data
 dataWithoutNa[is.na(data)] <- 0
 ```
+
+## What is the average daily activity pattern?
+
+It does not make any sense to calculate the average daily activity using data with NA values, hence I decided to use data with NA values replaced with zeros.
+
+```{r}
+avgDailyPattern <- aggregate(dataWithoutNa$steps, by=list(dataWithoutNa$interval), FUN=mean, na.action=na.omit)
+colnames(avgDailyPattern) <- c("interval", "averageActivity")
+```
+
+Daily activity pattern
+```{r}
+plot.ts(avgDailyPattern$interval, avgDailyPattern$averageActivity)
+```
+
+The most active interval: `r avgDailyPattern[avgDailyPattern$averageActivity == max(avgDailyPattern$averageActivity),]`
+
+## Task 3
+
+The number of missing values in the dataset can be calculated using the summary function. The function returns the number of NA values as one of the calculated properties.
+
+```{r}
+summary(data)
+```
+
+I replaced missing values with zeros in one of the previous steps.
+
+Histogram of the values without NAs
+```{r}
+stepsPerDay <- aggregate(dataWithoutNa$steps, by=list(dataWithoutNa$date), FUN=sum)
+colnames(stepsPerDay) <- c("date", "stepsPerDay")
+hist(stepsPerDay$stepsPerDay, xlab="Number of steps per day", main="Steps per day")
+```
+
+Mean: `r mean(stepsPerDay$stepsPerDay)`
+Median: `r median(stepsPerDay$stepsPerDay)`
+
+The values differ because in the first part of the assignement if I used mean and median functions without the na.rm=TRUE parameter both function would return NAs.
+Because the parameter was used the function skipped missing values.
+In the third task missing values have been replaced with zeros which significantly modified the mean and median.
+
+The choosen method of replacing missing values with numbers does not alter the total number of steps per day.
 
 ## Are there differences in activity patterns between weekdays and weekends?
